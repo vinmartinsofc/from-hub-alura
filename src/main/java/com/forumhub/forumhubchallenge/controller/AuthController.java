@@ -1,6 +1,7 @@
 package com.forumhub.forumhubchallenge.controller;
 
 import com.forumhub.forumhubchallenge.config.TokenService;
+import com.forumhub.forumhubchallenge.exception.LoginDuplicadoException;
 import com.forumhub.forumhubchallenge.model.Usuario;
 import com.forumhub.forumhubchallenge.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -60,20 +61,32 @@ public class AuthController {
 
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciais inválidas");
+        } catch (LoginDuplicadoException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("Erro: " + e.getMessage());
         }
+
+
     }
 
-    record LoginRequest(String login, String senha) {}
+    record LoginRequest(String login, String senha) {
+    }
 
 
     @PostMapping("/register")
-    public ResponseEntity register(@RequestBody @Valid Usuario usuario) {
-        Usuario usuarioSalvo = usuarioService.criar(usuario);
-        return ResponseEntity.ok().body(usuarioSalvo);
+    public ResponseEntity<?> register(@RequestBody @Valid Usuario usuario) {
+        try {
+            Usuario usuarioSalvo = usuarioService.criar(usuario);
+            return ResponseEntity.ok().body(usuarioSalvo);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
-}
 
-record TokenResponse(String tokenJWT) {}
+
+    record TokenResponse(String tokenJWT) {
+    }
+
+}

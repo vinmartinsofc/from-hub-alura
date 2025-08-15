@@ -1,5 +1,6 @@
 package com.forumhub.forumhubchallenge.service;
 
+import com.forumhub.forumhubchallenge.exception.LoginDuplicadoException;
 import com.forumhub.forumhubchallenge.model.Usuario;
 import com.forumhub.forumhubchallenge.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,12 +20,18 @@ public class UsuarioService implements UserDetailsService {
     private PasswordEncoder passwordEncoder;
 
     public Usuario criar(Usuario usuario) {
+        if (usuarioRepository.existsByLogin(usuario.getLogin())) {
+            throw new LoginDuplicadoException("Login já está em uso!");
+        }
+
         usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
         return usuarioRepository.save(usuario);
     }
 
+
+
     @Override
-    public Usuario loadUserByUsername(String login) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
         return usuarioRepository.findByLogin(login)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
     }
